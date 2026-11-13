@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useNavStore } from '../nav'
 import type { LearnerProgress } from '../progress'
 import { color } from '../tokens'
+import { useTutorUi } from '../tutor/store'
 import { CameraTile, type CameraInfo } from './CameraTile'
 import { Landing } from './Landing'
 import { Library } from './Library'
@@ -12,15 +13,15 @@ import { TopBar } from './TopBar'
 interface Props {
   /** Hand camera status and controls, supplied by the app root. */
   camera: CameraInfo
-  /** Learner memory from the tutor. Empty until the tutor writes it. */
+  /** Learner memory from the tutor. Defaults to the scores kept by the quiz in this panel. */
   progress?: LearnerProgress
 }
 
-const EMPTY: LearnerProgress = {}
-
 /** The whole app below the root: top bar, pages, and the camera tile. */
-export function AppShell({ camera, progress = EMPTY }: Props) {
+export function AppShell({ camera, progress: external }: Props) {
   const view = useNavStore((s) => s.view)
+  const local = useTutorUi((s) => s.progress)
+  const progress = external ?? local
   const { videoRef, ...info } = camera
 
   return (

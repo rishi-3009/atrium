@@ -38,8 +38,8 @@ export const color = {
 } as const
 
 export const font = {
-  display: "'Space Grotesk', 'Inter', system-ui, sans-serif",
-  body: "'Inter', system-ui, sans-serif",
+  display: "'Space Grotesk Variable', 'Inter Variable', 'Noto Sans Devanagari Variable', system-ui, sans-serif",
+  body: "'Inter Variable', 'Noto Sans Devanagari Variable', system-ui, sans-serif",
   mono: "'JetBrains Mono', ui-monospace, monospace",
 } as const
 
