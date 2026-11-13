@@ -14,14 +14,14 @@ export function App() {
 
   useEffect(() => {
     if (!useCamera) return startMouseHand()
+    const ctrl = new AbortController()
     let stop = () => {}
-    let cancelled = false
-    startCameraHands(videoRef.current!).then((s) => {
-      if (cancelled) s()
+    startCameraHands(videoRef.current!, ctrl.signal).then((s) => {
+      if (ctrl.signal.aborted) s()
       else stop = s
     })
     return () => {
-      cancelled = true
+      ctrl.abort()
       stop()
     }
   }, [useCamera])

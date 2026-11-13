@@ -1,7 +1,7 @@
 import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision'
 import { useHandStore } from '@/shared/stores'
 import type { HandState, Handedness } from '@/shared/types'
-import { openCamera, closeCamera } from './camera'
+import { openCamera } from './camera'
 import { useCameraStore } from './cameraStore'
 import { GestureMachine } from './gestures'
 import { LandmarkSmoother } from './oneEuro'
@@ -18,13 +18,23 @@ interface Slot {
 
 const newSlot = (): Slot => ({ smoother: new LandmarkSmoother(), machine: new GestureMachine() })
 
-/** Start camera hand tracking. Returns a stop function. */
-export async function startCameraHands(video: HTMLVideoElement): Promise<() => void> {
-  const camStore = useCameraStore.getState()
+/**
+ * Start camera hand tracking. Returns a stop function.
+ * Abort the signal to cancel a start that has not finished (React StrictMode runs effects twice).
+ */
+export async function startCameraHands(
+  video: HTMLVideoElement,
+  signal: AbortSignal,
+): Promise<() => void> {
   const stream = await openCamera()
+  const stopStream = () => stream?.getTracks().forEach((t) => t.stop())
   if (!stream) return () => {}
+  if (signal.aborted) {
+    stopStream()
+    return () => {}
+  }
 
-  camStore.set({ status: 'loading-model' })
+  useCameraStore.getState().set({ status: 'loading-model' })
   let landmarker: HandLandmarker
   try {
     const fileset = await FilesetResolver.forVisionTasks(WASM)
@@ -37,11 +47,19 @@ export async function startCameraHands(video: HTMLVideoElement): Promise<() => v
         minHandPresenceConfidence: 0.5,
         minTrackingConfidence: 0.5,
       })
-    landmarker = await make('GPU').catch(() => make('CPU'))
+    landmarker = await make('GPU').catch((e) => {
+      console.warn('GPU hand tracking failed, using CPU', e)
+      return make('CPU')
+    })
   } catch (e) {
     console.error('Hand model failed to load', e)
-    closeCamera()
-    useCameraStore.getState().set({ status: 'error' })
+    stopStream()
+    if (!signal.aborted) useCameraStore.getState().set({ status: 'error', stream: null })
+    return () => {}
+  }
+  if (signal.aborted) {
+    landmarker.close()
+    stopStream()
     return () => {}
   }
 
@@ -70,9 +88,9 @@ export async function startCameraHands(video: HTMLVideoElement): Promise<() => v
     const next: Partial<Record<Handedness, HandState>> = {}
 
     result.landmarks.forEach((raw, i) => {
-      // The frame is not mirrored, so MediaPipe's label is the opposite of the user's hand.
+      // MediaPipe's own label matched the user's hand in testing, so no swap.
       const label = result.handedness[i]?.[0]?.categoryName
-      const side: Handedness = label === 'Left' ? 'right' : 'left'
+      const side: Handedness = label === 'Left' ? 'left' : 'right'
       if (seen.has(side)) return
       seen.add(side)
       const slot = slots[side]
@@ -120,8 +138,9 @@ export async function startCameraHands(video: HTMLVideoElement): Promise<() => v
     stopped = true
     cancelAnimationFrame(raf)
     landmarker.close()
-    video.srcObject = null
-    closeCamera()
+    if (video.srcObject === stream) video.srcObject = null
+    stopStream()
+    useCameraStore.getState().set({ stream: null, status: 'idle', fps: 0 })
     const s = useHandStore.getState()
     s.setHand(null, 'left')
     s.setHand(null, 'right')
