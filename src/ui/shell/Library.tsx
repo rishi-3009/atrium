@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { glbModels } from '../../models/glb'
 import { Card } from '../components/Card'
 import { Chip } from '../components/Chip'
 import { useNavStore } from '../nav'
-import { modelMastery, parseChapter, type LearnerProgress } from '../progress'
+import { catalog, modelMastery, parseChapter, type LearnerProgress } from '../progress'
 import { ProgressRing } from '../components/ProgressRing'
 import { color, font, spring, type as t } from '../tokens'
 import { TOP_BAR_HEIGHT } from './TopBar'
@@ -24,7 +23,7 @@ export function Library({ progress }: { progress: LearnerProgress }) {
 
   const cards = useMemo(
     () =>
-      Object.values(glbModels)
+      catalog
         .map((m) => {
           const chapters = m.content.definition.chapters.map(parseChapter)
           return { model: m, chapters, shown: chapters.filter((c) => filter === 'all' || c.cls === filter) }
