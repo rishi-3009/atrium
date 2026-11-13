@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { MathUtils, Vector3 } from 'three'
 import { useSceneStore } from '../shared/stores'
+import { focus } from './focus'
 
 export type Vec3Tuple = [number, number, number]
 
@@ -24,8 +25,9 @@ export function CameraRig({ focusPoint, overviewDistance = 6.5, closeupDistance 
   const selected = useSceneStore((s) => s.selectedPart)
 
   useFrame(({ camera, clock }, dt) => {
-    const closeup = selected !== null && focusPoint !== undefined
-    const target = closeup ? tmp.set(...focusPoint) : tmp.set(0, 0, 0)
+    const point = focus.point ?? focusPoint
+    const closeup = selected !== null && point !== undefined && point !== null
+    const target = closeup ? tmp.set(...point) : tmp.set(0, 0, 0)
     const dist = closeup ? closeupDistance : overviewDistance
     // gentle idle drift so the scene is never frozen
     const t = clock.elapsedTime
