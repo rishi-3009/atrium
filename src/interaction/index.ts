@@ -1,0 +1,1 @@
+export { startHandInteraction } from './controller'

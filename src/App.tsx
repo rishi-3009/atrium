@@ -3,6 +3,7 @@ import { startMouseHand } from '@/hands/mouseHand'
 import { startCameraHands } from '@/hands/tracker'
 import { useCameraStore } from '@/hands/cameraStore'
 import { AppShell } from '@/ui'
+import { startHandInteraction } from '@/interaction'
 
 /**
  * Root wiring. The UI never imports from `hands/`, so this file starts the
@@ -28,5 +29,18 @@ export function App() {
     }
   }, [useCamera])
 
-  return <AppShell camera={{ videoRef, enabled: useCamera, status, fps, onToggle: () => setUseCamera((v) => !v) }} />
+  // hands drive the scene; it idles while the mouse is in charge
+  useEffect(() => startHandInteraction(), [])
+
+  return (
+    <AppShell
+      camera={{
+        videoRef,
+        enabled: useCamera,
+        status,
+        fps,
+        onToggle: () => setUseCamera((v) => !v),
+      }}
+    />
+  )
 }
