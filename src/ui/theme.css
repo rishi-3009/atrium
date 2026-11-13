@@ -1,6 +1,7 @@
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/space-grotesk';
 @import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource-variable/noto-sans-devanagari';
 
 /* Mirrors src/ui/tokens.ts. Change values there first. */
 @theme {
@@ -10,8 +11,8 @@
   --color-ink-2: #a4afbf;
   --color-ink-3: #6b7687;
   --color-accent: #3de0c8;
-  --font-display: 'Space Grotesk Variable', 'Inter Variable', system-ui, sans-serif;
-  --font-sans: 'Inter Variable', system-ui, sans-serif;
+  --font-display: 'Space Grotesk Variable', 'Inter Variable', 'Noto Sans Devanagari Variable', system-ui, sans-serif;
+  --font-sans: 'Inter Variable', 'Noto Sans Devanagari Variable', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 }
 
