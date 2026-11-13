@@ -61,8 +61,10 @@ function buildParts(definition: ModelDefinition, object: Object3D, spread: numbe
 
     box.setFromObject(node).getCenter(center)
     const away = center.clone().sub(modelCenter)
-    if (away.lengthSq() < 1e-6) away.set(0, 1, 0)
-    away.normalize().multiplyScalar(radius * spread)
+    const len = away.length()
+    if (len < 1e-6) away.set(0, 1, 0)
+    // central parts move less than outer ones; `userData.fixed` parts stay put
+    away.normalize().multiplyScalar(node.userData.fixed ? 0 : radius * spread * 0.4 + len * spread * 0.8)
 
     const p0 = node.parent.worldToLocal(center.clone())
     const p1 = node.parent.worldToLocal(center.clone().add(away))
