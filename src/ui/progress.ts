@@ -1,4 +1,8 @@
-import { glbModels } from '../models/glb'
+import { content, type ModelContent } from '../content'
+
+/** Every model's content, without loading any 3D code. */
+export const catalog: { id: string; content: ModelContent }[] = Object.values(content).map((c) => ({ id: c.definition.id, content: c }))
+export const catalogById: Record<string, { id: string; content: ModelContent } | undefined> = Object.fromEntries(catalog.map((m) => [m.id, m]))
 
 /** How well the learner knows one part. `score` runs from 0 to 1. */
 export interface PartProgress {
@@ -21,7 +25,7 @@ export const WEAK_BELOW = 0.6
 /** Parts the learner has tried and not yet mastered, weakest first. */
 export function weakParts(progress: LearnerProgress): WeakPart[] {
   const out: WeakPart[] = []
-  for (const model of Object.values(glbModels)) {
+  for (const model of catalog) {
     const rows = progress[model.id] ?? {}
     for (const part of model.content.definition.parts) {
       const p = rows[part.id]
@@ -35,7 +39,7 @@ export function weakParts(progress: LearnerProgress): WeakPart[] {
 
 /** Share of a model's parts the learner has mastered, 0 to 1. */
 export function modelMastery(progress: LearnerProgress, modelId: string): number {
-  const model = glbModels[modelId]
+  const model = catalogById[modelId]
   if (!model) return 0
   const parts = model.content.definition.parts
   const rows = progress[modelId] ?? {}

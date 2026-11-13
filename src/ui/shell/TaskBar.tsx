@@ -14,7 +14,7 @@ const kindLabel: Record<TaskDef['kind'], string> = {
 }
 
 /** Bottom bar: the current task, hint and the mouse explode control. */
-export function TaskBar({ tasks, partLabel }: { tasks: TaskDef[]; partLabel: (id: string) => string }) {
+export function TaskBar({ tasks, partLabel, compact = false }: { tasks: TaskDef[]; partLabel: (id: string) => string; compact?: boolean }) {
   const [i, setI] = useState(0)
   const explode = useSceneStore((s) => s.explode)
   const setExplode = useSceneStore((s) => s.setExplode)
@@ -33,14 +33,14 @@ export function TaskBar({ tasks, partLabel }: { tasks: TaskDef[]; partLabel: (id
       transition={spring.smooth}
       style={{
         position: 'absolute',
-        left: 28,
-        right: 28,
-        bottom: 24,
+        left: compact ? 16 : 28,
+        right: 0,
+        bottom: 0,
         display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1fr) auto',
-        gap: 28,
+        gridTemplateColumns: compact ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) auto',
+        gap: compact ? 12 : 28,
         alignItems: 'center',
-        padding: '14px 20px',
+        padding: compact ? '12px 16px' : '14px 20px',
         borderRadius: radius.xl,
         background: color.bg.panel,
         border: `1px solid ${color.line.default}`,
@@ -77,7 +77,7 @@ export function TaskBar({ tasks, partLabel }: { tasks: TaskDef[]; partLabel: (id
         </AnimatePresence>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: compact ? 10 : 14, flexWrap: 'wrap' }}>
         <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: font.display, fontSize: 12, color: color.text.secondary }}>
           Explode
           <input
@@ -87,7 +87,7 @@ export function TaskBar({ tasks, partLabel }: { tasks: TaskDef[]; partLabel: (id
             step={0.005}
             value={explode}
             onChange={(e) => setExplode(Number(e.target.value))}
-            style={{ width: 120, accentColor: color.accent.base }}
+            style={{ width: compact ? 90 : 120, accentColor: color.accent.base }}
           />
         </label>
         <Button variant="ghost" onClick={hint} style={{ padding: '0.45rem 1rem', fontSize: 13 }}>

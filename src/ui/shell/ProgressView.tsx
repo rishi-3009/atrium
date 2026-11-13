@@ -1,10 +1,9 @@
 import { motion } from 'framer-motion'
-import { glbModels } from '../../models/glb'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { ProgressRing } from '../components/ProgressRing'
 import { useNavStore } from '../nav'
-import { modelMastery, weakParts, type LearnerProgress } from '../progress'
+import { catalog, catalogById, modelMastery, weakParts, type LearnerProgress } from '../progress'
 import { color, font, glow, radius, spring, type as t } from '../tokens'
 import { TOP_BAR_HEIGHT } from './TopBar'
 
@@ -61,7 +60,7 @@ export function ProgressView({ progress }: { progress: LearnerProgress }) {
       </motion.div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20, marginBottom: 32 }}>
-        {Object.values(glbModels).map((m, i) => {
+        {catalog.map((m, i) => {
           const mastery = modelMastery(progress, m.id)
           return (
             <motion.div key={m.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring.smooth, delay: 0.05 + i * 0.05 }}>
@@ -104,7 +103,7 @@ export function ProgressView({ progress }: { progress: LearnerProgress }) {
             >
               <span>
                 <span style={{ fontFamily: font.display, fontWeight: 600 }}>{w.label}</span>
-                <span style={{ color: color.text.muted, fontSize: t.small.size, marginLeft: 10 }}>{glbModels[w.modelId]?.content.definition.title}</span>
+                <span style={{ color: color.text.muted, fontSize: t.small.size, marginLeft: 10 }}>{catalogById[w.modelId]?.content.definition.title}</span>
               </span>
               <span style={{ height: 6, borderRadius: radius.pill, background: color.line.default, overflow: 'hidden' }}>
                 <motion.span

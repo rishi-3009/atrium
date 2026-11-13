@@ -1,13 +1,17 @@
-import { useEffect, useMemo } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useFrame } from '@react-three/fiber'
 import { glbModels } from '../../models/glb'
 import { ExplodableModel, Stage } from '../../scene'
 import { useSceneStore } from '../../shared/stores'
 import { Button } from '../components/Button'
 import { Chip } from '../components/Chip'
+import { startDemo } from '../demo'
 import { useNavStore } from '../nav'
 import { color, font, spring } from '../tokens'
+import { Loader } from './Loader'
+import { StageBoundary } from './StageBoundary'
+import { useBuilt } from './useBuilt'
 
 /** Slowly pulls the hero model apart and puts it back together. */
 function AutoExplode() {
@@ -23,7 +27,7 @@ export function Landing() {
   const go = useNavStore((s) => s.go)
   const openModel = useNavStore((s) => s.openModel)
   const heart = glbModels.heart!
-  const object = useMemo(() => heart.build(), [heart])
+  const object = useBuilt(heart)
 
   useEffect(() => {
     const s = useSceneStore.getState()
@@ -37,10 +41,15 @@ export function Landing() {
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
       <div style={{ position: 'absolute', inset: 0, left: '28%' }}>
-        <Stage distance={11}>
-          <AutoExplode />
-          <ExplodableModel definition={heart.content.definition} object={object} spread={0.7} />
-        </Stage>
+        <StageBoundary>
+          {object && (
+            <Stage distance={11}>
+              <AutoExplode />
+              <ExplodableModel definition={heart.content.definition} object={object} spread={0.7} />
+            </Stage>
+          )}
+        </StageBoundary>
+        <AnimatePresence>{!object && <Loader key="load" label="Building the heart" />}</AnimatePresence>
       </div>
       <div
         style={{
@@ -86,11 +95,14 @@ export function Landing() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...spring.smooth, delay: 0.18 }}
-          style={{ display: 'flex', gap: 12, pointerEvents: 'auto' }}
+          style={{ display: 'flex', gap: 12, flexWrap: 'wrap', pointerEvents: 'auto' }}
         >
           <Button onClick={() => openModel('heart')}>Open the heart</Button>
           <Button variant="ghost" onClick={() => go('library')}>
             Browse chapters
+          </Button>
+          <Button variant="ghost" onClick={startDemo}>
+            Watch the demo
           </Button>
         </motion.div>
       </div>

@@ -151,7 +151,7 @@ function Body({ content, partId }: BodyProps) {
 }
 
 /** Right-hand panel: language and level, the streamed explanation, the quiz, and the part list. */
-export function TutorPanel({ content }: { content: ModelContent }) {
+export function TutorPanel({ content, compact = false }: { content: ModelContent; compact?: boolean }) {
   const selected = useSceneStore((s) => s.selectedPart)
   const hovered = useSceneStore((s) => s.hoveredPart)
   const lang = useTutorUi((s) => s.lang)
@@ -161,8 +161,8 @@ export function TutorPanel({ content }: { content: ModelContent }) {
   const { definition } = content
 
   return (
-    <GlassPanel style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: 22, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+    <GlassPanel style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: compact ? 16 : 22, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: compact ? 12 : 16 }}>
         <Segmented id="lang" value={lang} options={LANGS} onChange={setLang} />
         <Segmented id="level" value={level} options={LEVELS} onChange={setLevel} />
       </div>
@@ -183,7 +183,7 @@ export function TutorPanel({ content }: { content: ModelContent }) {
 
       <div style={{ borderTop: `1px solid ${color.line.subtle}`, paddingTop: 14, marginTop: 14 }}>
         <div style={{ ...eyebrow, color: color.text.muted, marginBottom: 10 }}>Parts</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 150, overflow: 'auto' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: compact ? 104 : 150, overflow: 'auto' }}>
           {definition.parts.map((p) => (
             <button
               key={p.id}
