@@ -21,16 +21,28 @@ export const useHandStore = create<HandStore>((set) => ({
   setSource: (source) => set({ source }),
 }))
 
+/** A part the hand is holding and how far it is pulled out, 0-1 on top of the explode. */
+export interface Pull {
+  partId: string
+  amount: number
+}
+
 interface SceneStore {
   hoveredPart: string | null
   selectedPart: string | null
   /** 0 = assembled, 1 = fully exploded. */
   explode: number
   rotation: { x: number; y: number }
+  /** Null when no part is held. The model moves only that part; release springs it back. */
+  pull: Pull | null
+  /** How close a hovering hand is to selecting by dwell, 0-1. Drives the pointer ring. */
+  dwell: number
   setHovered: (id: string | null) => void
   setSelected: (id: string | null) => void
   setExplode: (v: number) => void
   setRotation: (x: number, y: number) => void
+  setPull: (pull: Pull | null) => void
+  setDwell: (v: number) => void
 }
 
 export const useSceneStore = create<SceneStore>((set) => ({
@@ -38,10 +50,15 @@ export const useSceneStore = create<SceneStore>((set) => ({
   selectedPart: null,
   explode: 0,
   rotation: { x: 0, y: 0 },
+  pull: null,
+  dwell: 0,
   setHovered: (hoveredPart) => set({ hoveredPart }),
   setSelected: (selectedPart) => set({ selectedPart }),
   setExplode: (v) => set({ explode: Math.min(1, Math.max(0, v)) }),
   setRotation: (x, y) => set({ rotation: { x, y } }),
+  setPull: (pull) =>
+    set({ pull: pull && { partId: pull.partId, amount: Math.min(1, Math.max(0, pull.amount)) } }),
+  setDwell: (v) => set({ dwell: Math.min(1, Math.max(0, v)) }),
 }))
 
 export type { Gesture }
