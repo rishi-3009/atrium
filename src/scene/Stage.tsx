@@ -12,20 +12,22 @@ interface Props {
   children: ReactNode
   /** World position the camera flies to when a part is selected. */
   focusPoint?: Vec3Tuple
+  /** How far the camera sits from the model in the overview. */
+  distance?: number
 }
 
 /**
  * The 3D canvas: lighting, post-processing, camera rig and adaptive
  * resolution. Quality steps down when the frame rate drops.
  */
-export function Stage({ children, focusPoint }: Props) {
+export function Stage({ children, focusPoint, distance = 6.5 }: Props) {
   const [quality, setQuality] = useState<Quality>(2)
   const [dpr, setDpr] = useState(1.5)
 
   return (
     <Canvas
       dpr={dpr}
-      camera={{ position: [0, 0.5, 6.5], fov: 38, near: 0.1, far: 60 }}
+      camera={{ position: [0, 0.5, distance], fov: 38, near: 0.1, far: 60 }}
       gl={{ antialias: false, powerPreference: 'high-performance' }}
       onCreated={({ gl }) => {
         gl.toneMapping = ACESFilmicToneMapping
@@ -52,7 +54,7 @@ export function Stage({ children, focusPoint }: Props) {
       <Suspense fallback={null}>
         <ModelRoot>{children}</ModelRoot>
       </Suspense>
-      <CameraRig focusPoint={focusPoint} />
+      <CameraRig focusPoint={focusPoint} overviewDistance={distance} />
       <Effects quality={quality} />
     </Canvas>
   )
