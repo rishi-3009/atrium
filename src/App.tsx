@@ -8,14 +8,15 @@ import {
   useCameraStore,
 } from '@/hands'
 import { AppShell } from '@/ui'
+import { startHandInteraction } from '@/interaction'
 
 // `?hand=fake` runs a scripted hand, for working on the visuals without a webcam.
 const FAKE = new URLSearchParams(window.location.search).get('hand') === 'fake'
 
 /**
  * Root wiring. The UI never imports from `hands/`, so this file starts the
- * mouse or camera hand, passes the camera status down, and mounts the hand
- * overlay and the gesture lesson above the shell.
+ * mouse or camera hand, passes the camera status down, starts the hand
+ * interaction, and mounts the hand overlay and the gesture lesson above the shell.
  */
 export function App() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -36,6 +37,9 @@ export function App() {
       stop()
     }
   }, [useCamera])
+
+  // hands drive the scene; it idles while the mouse is in charge
+  useEffect(() => startHandInteraction(), [])
 
   return (
     <>

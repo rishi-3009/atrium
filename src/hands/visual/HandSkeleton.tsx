@@ -14,7 +14,7 @@ import {
   Points,
   ShaderMaterial,
 } from 'three'
-import { useHandStore } from '@/shared/stores'
+import { useHandStore, useSceneStore } from '@/shared/stores'
 import type { Gesture, Handedness, Vec3 } from '@/shared/types'
 import { color } from '@/ui/tokens'
 import { BONES, FINGERTIPS } from '../pose'
@@ -366,10 +366,18 @@ export function HandSkeleton({ side }: { side: Handedness }) {
       s.lastGesture = gesture
     }
     s.pulse *= Math.exp(-5 * dt)
-    s.fill = MathUtils.damp(s.fill, held ? 1 : pinch, 18, dt)
+    // while pointing, the ring sits on the fingertip and fills with the dwell towards a select
+    const dwell = gesture === 'point' ? useSceneStore.getState().dwell : 0
+    const pointing = gesture === 'point'
+    s.fill = MathUtils.damp(s.fill, held ? 1 : pointing ? dwell : pinch, 18, dt)
     s.engaged = MathUtils.damp(s.engaged, held ? 1 : 0, 14, dt)
-    const wantRing =
-      gesture === 'point' || gesture === 'palm' ? 0 : MathUtils.clamp((pinch - 0.1) / 0.25, 0, 1)
+    const wantRing = pointing
+      ? dwell > 0
+        ? 1
+        : 0
+      : gesture === 'palm'
+        ? 0
+        : MathUtils.clamp((pinch - 0.1) / 0.25, 0, 1)
     s.ringAlpha = MathUtils.damp(s.ringAlpha, Math.max(wantRing, held ? 1 : 0), 12, dt)
 
     const tx = cur[4 * 3]!
@@ -379,8 +387,9 @@ export function HandSkeleton({ side }: { side: Handedness }) {
     const iy = cur[8 * 3 + 1]!
     const iz = cur[8 * 3 + 2]!
     const gap = Math.hypot(ix - tx, iy - ty)
-    const radius = Math.max(0.2, gap * 0.5 + 0.12)
-    b.ring.position.set((tx + ix) / 2, (ty + iy) / 2, (tz + iz) / 2)
+    const radius = pointing ? 0.26 : Math.max(0.2, gap * 0.5 + 0.12)
+    if (pointing) b.ring.position.set(ix, iy, iz)
+    else b.ring.position.set((tx + ix) / 2, (ty + iy) / 2, (tz + iz) / 2)
     b.ring.scale.setScalar((2 * radius) / 0.78)
     b.ringMat.uniforms.uFill!.value = s.fill
     b.ringMat.uniforms.uEngaged!.value = s.engaged

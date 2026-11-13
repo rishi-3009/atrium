@@ -112,12 +112,14 @@ export function ExplodableModel({ definition, object, spread = 0.9 }: Props) {
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 1 / 30)
-    const { explode, hoveredPart, selectedPart } = useSceneStore.getState()
+    const { explode, hoveredPart, selectedPart, pull } = useSceneStore.getState()
     const n = parts.length
 
     parts.forEach((p, i) => {
       const delay = n > 1 ? (i / (n - 1)) * STAGGER : 0
-      const target = MathUtils.clamp((explode - delay) / (1 - STAGGER), 0, 1)
+      let target = MathUtils.clamp((explode - delay) / (1 - STAGGER), 0, 1)
+      // a part held by the hand moves out on its own; release springs it back
+      if (pull && pull.partId === p.id) target = Math.max(target, pull.amount)
       p.v += (STIFFNESS * (target - p.t) - DAMPING * p.v) * dt
       p.t += p.v * dt
       p.node.position.copy(p.base).addScaledVector(p.offset, p.t)
