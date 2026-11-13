@@ -1,0 +1,34 @@
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/jetbrains-mono';
+
+/* Mirrors src/ui/tokens.ts. Change values there first. */
+@theme {
+  --color-base: #07090d;
+  --color-raised: #0d1117;
+  --color-ink: #eef2f7;
+  --color-ink-2: #a4afbf;
+  --color-ink-3: #6b7687;
+  --color-accent: #3de0c8;
+  --font-display: 'Space Grotesk Variable', 'Inter Variable', system-ui, sans-serif;
+  --font-sans: 'Inter Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  background: var(--color-base);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(61, 224, 200, 0.3);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
