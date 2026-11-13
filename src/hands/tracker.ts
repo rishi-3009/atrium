@@ -7,7 +7,7 @@ import { GestureMachine } from './gestures'
 import { LandmarkSmoother } from './oneEuro'
 import { computeSignals } from './signals'
 
-const WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm'
+const WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm'
 const MODEL =
   'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'
 
@@ -38,7 +38,8 @@ export async function startCameraHands(video: HTMLVideoElement): Promise<() => v
         minTrackingConfidence: 0.5,
       })
     landmarker = await make('GPU').catch(() => make('CPU'))
-  } catch {
+  } catch (e) {
+    console.error('Hand model failed to load', e)
     closeCamera()
     useCameraStore.getState().set({ status: 'error' })
     return () => {}
