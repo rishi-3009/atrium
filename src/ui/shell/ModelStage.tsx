@@ -13,6 +13,12 @@ import { TutorPanel } from './TutorPanel'
 import { useBuilt } from './useBuilt'
 import { useViewport } from './useViewport'
 
+/** Camera distance multiplier per model. Below 1 starts closer. */
+/** Aim height per model. Above 0 moves the model lower in the frame. */
+const LOOK_Y: Record<string, number> = { heart: 0.5 }
+
+const ZOOM: Record<string, number> = { heart: 0.8, cell: 0.8, flower: 0.8, dna: 0.75, sarcomere: 0.75, neuron: 0.75 }
+
 /** The model page: 3D in the centre, tutor panel on the right, tasks along the bottom. */
 export function ModelStage() {
   const modelId = useNavStore((s) => s.modelId)
@@ -57,8 +63,8 @@ export function ModelStage() {
         <div style={{ position: 'absolute', inset: `0 0 ${taskSpace}px 0` }}>
           <StageBoundary>
             {object && (
-              <Stage key={model.id} distance={compact ? 11.5 : 10.5}>
-                <ExplodableModel definition={definition} object={object} />
+              <Stage key={model.id} distance={(compact ? 11.5 : 10.5) * (ZOOM[model.id] ?? 1)} glow={model.id === 'dna' ? 2 : 1} lookY={LOOK_Y[model.id] ?? 0}>
+                <ExplodableModel definition={definition} object={object} ambientRim={model.id === 'dna' ? 0.7 : 0} />
               </Stage>
             )}
           </StageBoundary>

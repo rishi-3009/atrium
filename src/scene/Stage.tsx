@@ -14,13 +14,17 @@ interface Props {
   focusPoint?: Vec3Tuple
   /** How far the camera sits from the model in the overview. */
   distance?: number
+  /** Bloom strength. 1 = default; a model that should glow more can raise it. */
+  glow?: number
+  /** Aim the overview camera higher so the model sits lower in the frame. */
+  lookY?: number
 }
 
 /**
  * The 3D canvas: lighting, post-processing, camera rig and adaptive
  * resolution. Quality steps down when the frame rate drops.
  */
-export function Stage({ children, focusPoint, distance = 6.5 }: Props) {
+export function Stage({ children, focusPoint, distance = 6.5, glow = 1, lookY = 0 }: Props) {
   const [quality, setQuality] = useState<Quality>(2)
   const [dpr, setDpr] = useState(1.5)
 
@@ -54,8 +58,8 @@ export function Stage({ children, focusPoint, distance = 6.5 }: Props) {
       <Suspense fallback={null}>
         <ModelRoot>{children}</ModelRoot>
       </Suspense>
-      <CameraRig focusPoint={focusPoint} overviewDistance={distance} />
-      <Effects quality={quality} />
+      <CameraRig focusPoint={focusPoint} overviewDistance={distance} overviewLookY={lookY} />
+      <Effects quality={quality} glow={glow} />
     </Canvas>
   )
 }

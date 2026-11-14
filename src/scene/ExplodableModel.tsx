@@ -13,6 +13,8 @@ interface Props {
   object: Object3D
   /** How far parts travel at full explode, as a share of the model size. */
   spread?: number
+  /** Steady edge glow on every part, 0-1. Hover and select still raise it. */
+  ambientRim?: number
 }
 
 interface PartState {
@@ -123,7 +125,7 @@ function buildParts(definition: ModelDefinition, object: Object3D, spread: numbe
  * selected. Mouse hover and click write the scene store; the hand
  * interaction writes the same store.
  */
-export function ExplodableModel({ definition, object, spread = 0.9 }: Props) {
+export function ExplodableModel({ definition, object, spread = 0.9, ambientRim = 0 }: Props) {
   const parts = useMemo(() => buildParts(definition, object, spread), [definition, object, spread])
   const hovered = useSceneStore((s) => s.hoveredPart)
   const selected = useSceneStore((s) => s.selectedPart)
@@ -181,7 +183,7 @@ export function ExplodableModel({ definition, object, spread = 0.9 }: Props) {
 
       const isHover = hoveredPart === p.id
       const isSelected = selectedPart === p.id
-      const rimTarget = isHover ? 1 : isSelected ? 0.55 : 0
+      const rimTarget = isHover ? 1 : isSelected ? Math.max(0.55, ambientRim) : ambientRim
       const dimTarget = selectedPart && !isSelected && !isHover ? 1 : 0
       p.rim = MathUtils.damp(p.rim, rimTarget, 12, dt)
       p.dim = MathUtils.damp(p.dim, dimTarget, 6, dt)

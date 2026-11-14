@@ -1,6 +1,6 @@
 import {
-  BoxGeometry,
   CylinderGeometry,
+  Color,
   Group,
   Mesh,
   MeshPhysicalMaterial,
@@ -9,6 +9,7 @@ import {
   Vector3,
   type MeshPhysicalMaterialParameters,
 } from 'three'
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { useSceneStore } from '@/shared/stores'
 import { meshOf, named } from '../glb/geometry'
 import { hideable, onFrame } from './frame'
@@ -56,20 +57,22 @@ const tmpQ = new Quaternion()
 
 const unitCyl = new CylinderGeometry(1, 1, 1, 10, 1)
 const sugarGeo = new SphereGeometry(SUGAR_R, 20, 14)
-const baseGeo: Record<Base, BoxGeometry> = {
-  A: new BoxGeometry(BASE_LEN.A, 0.1, 0.15),
-  G: new BoxGeometry(BASE_LEN.G, 0.1, 0.15),
-  T: new BoxGeometry(BASE_LEN.T, 0.1, 0.15),
-  C: new BoxGeometry(BASE_LEN.C, 0.1, 0.15),
+const roundedBase = (len: number) => new RoundedBoxGeometry(len, 0.1, 0.15, 4, 0.035)
+const baseGeo: Record<Base, RoundedBoxGeometry> = {
+  A: roundedBase(BASE_LEN.A),
+  G: roundedBase(BASE_LEN.G),
+  T: roundedBase(BASE_LEN.T),
+  C: roundedBase(BASE_LEN.C),
 }
 
 function glossy(color: string, extra: MeshPhysicalMaterialParameters = {}) {
   return new MeshPhysicalMaterial({
     color,
-    roughness: 0.32,
-    metalness: 0,
-    clearcoat: 0.7,
-    clearcoatRoughness: 0.2,
+    roughness: 0.22,
+    metalness: 0.15,
+    clearcoat: 1,
+    clearcoatRoughness: 0.08,
+    envMapIntensity: 1.4,
     ...extra,
   })
 }
@@ -142,15 +145,15 @@ export function buildDna(): Group {
     (g) => (g.userData.fixed = true),
   )
 
-  const bb1Mat = glossy('#dfe4ee')
-  const bb2Mat = glossy('#b4bfd2')
-  const newMat = glossy('#7aefdc', { emissive: '#1b7f72', emissiveIntensity: 0.25 })
-  const bondMat = glossy('#f4f6fa', { roughness: 0.5 })
+  const bb1Mat = glossy('#dfe4ee', { emissive: '#7fa6ff', emissiveIntensity: 0.35, sheen: 1, sheenColor: new Color('#9fe8ff') })
+  const bb2Mat = glossy('#b4bfd2', { emissive: '#5fd6c4', emissiveIntensity: 0.35, sheen: 1, sheenColor: new Color('#9fe8ff') })
+  const newMat = glossy('#7aefdc', { emissive: '#2fd6bd', emissiveIntensity: 0.7 })
+  const bondMat = glossy('#f4f6fa', { roughness: 0.4, emissive: '#ffffff', emissiveIntensity: 0.3 })
   const baseMat: Record<Base, MeshPhysicalMaterial> = {
-    A: glossy(BASE_COLOR.A),
-    T: glossy(BASE_COLOR.T),
-    G: glossy(BASE_COLOR.G),
-    C: glossy(BASE_COLOR.C),
+    A: glossy(BASE_COLOR.A, { emissive: BASE_COLOR.A, emissiveIntensity: 0.6 }),
+    T: glossy(BASE_COLOR.T, { emissive: BASE_COLOR.T, emissiveIntensity: 0.6 }),
+    G: glossy(BASE_COLOR.G, { emissive: BASE_COLOR.G, emissiveIntensity: 0.6 }),
+    C: glossy(BASE_COLOR.C, { emissive: BASE_COLOR.C, emissiveIntensity: 0.6 }),
   }
 
   const y0 = ((N - 1) * RISE) / 2

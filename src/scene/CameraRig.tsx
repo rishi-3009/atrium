@@ -11,6 +11,8 @@ interface Props {
   focusPoint?: Vec3Tuple
   overviewDistance?: number
   closeupDistance?: number
+  /** Overview aim height. Above 0 moves the model lower in the frame. */
+  overviewLookY?: number
 }
 
 const OVERVIEW_HEIGHT = 0.5
@@ -20,14 +22,14 @@ const tmp = new Vector3()
  * Moves the camera between an overview and a part close-up with damped
  * easing. Reads `selectedPart` from the scene store, never from hands/.
  */
-export function CameraRig({ focusPoint, overviewDistance = 6.5, closeupDistance = 3 }: Props) {
+export function CameraRig({ focusPoint, overviewDistance = 6.5, closeupDistance = 3, overviewLookY = 0 }: Props) {
   const look = useRef(new Vector3(0, 0, 0))
   const selected = useSceneStore((s) => s.selectedPart)
 
   useFrame(({ camera, clock }, dt) => {
     const point = focus.point ?? focusPoint
     const closeup = selected !== null && point !== undefined && point !== null
-    const target = closeup ? tmp.set(...point) : tmp.set(0, 0, 0)
+    const target = closeup ? tmp.set(...point) : tmp.set(0, overviewLookY, 0)
     const dist = closeup ? closeupDistance : overviewDistance
     // gentle idle drift so the scene is never frozen
     const t = clock.elapsedTime
