@@ -1,38 +1,46 @@
 /**
  * Design tokens. The only place colours, fonts, spacing, radii, glows and
  * motion timings are defined. Components and the scene read from here.
- * Dark, cinematic, one accent (teal-cyan "bio" glow).
+ * Deep wine and blood red with one rose accent. Dark so the 3D glows.
  */
 
 export const color = {
   bg: {
-    base: '#07090d',
-    raised: '#0d1117',
-    panel: 'rgba(16, 21, 29, 0.62)',
-    panelSolid: '#10151d',
-    overlay: 'rgba(4, 6, 9, 0.72)',
+    base: '#14060a',
+    raised: '#1d0a10',
+    panel: 'rgba(48, 14, 22, 0.62)',
+    panelSolid: '#2a0d15',
+    overlay: 'rgba(14, 3, 6, 0.72)',
   },
   line: {
-    subtle: 'rgba(255, 255, 255, 0.06)',
-    default: 'rgba(255, 255, 255, 0.10)',
-    strong: 'rgba(255, 255, 255, 0.18)',
+    subtle: 'rgba(255, 214, 220, 0.08)',
+    default: 'rgba(255, 214, 220, 0.14)',
+    strong: 'rgba(255, 214, 220, 0.24)',
   },
   text: {
-    primary: '#eef2f7',
-    secondary: '#a4afbf',
-    muted: '#6b7687',
-    onAccent: '#031314',
+    primary: '#fff0f1',
+    secondary: '#e0b4ba',
+    muted: '#a4747c',
+    onAccent: '#2a0508',
   },
   accent: {
-    base: '#3de0c8',
-    soft: '#7aefdc',
-    deep: '#16a898',
-    glow: 'rgba(61, 224, 200, 0.45)',
-    wash: 'rgba(61, 224, 200, 0.10)',
+    base: '#ff6f84',
+    soft: '#ff9aa9',
+    deep: '#d1243b',
+    glow: 'rgba(255, 111, 132, 0.45)',
+    wash: 'rgba(255, 111, 132, 0.12)',
+  },
+  /** Cells in the homepage vessel. */
+  cell: {
+    red: '#d6192b',
+    wall: '#7a0f1c',
+    platelet: '#b89cf0',
+    white: '#f2eee8',
+    fibrin: '#e9dcc9',
   },
   state: {
     correct: '#5ee59a',
-    wrong: '#ff6b81',
+    wrong: '#ff3d57',
     warn: '#ffc766',
   },
 } as const
@@ -45,8 +53,8 @@ export const font = {
 
 /** Type scale: size / line height / weight / tracking. */
 export const type = {
-  hero: { size: '3.5rem', line: '1.05', weight: 600, tracking: '-0.03em' },
-  h1: { size: '2.25rem', line: '1.15', weight: 600, tracking: '-0.02em' },
+  hero: { size: '3.5rem', line: '1.05', weight: 700, tracking: '-0.03em' },
+  h1: { size: '2.25rem', line: '1.15', weight: 700, tracking: '-0.02em' },
   h2: { size: '1.5rem', line: '1.25', weight: 600, tracking: '-0.015em' },
   h3: { size: '1.125rem', line: '1.35', weight: 600, tracking: '-0.01em' },
   body: { size: '0.9375rem', line: '1.6', weight: 400, tracking: '0' },
@@ -76,10 +84,10 @@ export const radius = {
 } as const
 
 export const glow = {
-  accent: '0 0 24px rgba(61, 224, 200, 0.35), 0 0 64px rgba(61, 224, 200, 0.15)',
-  accentSoft: '0 0 16px rgba(61, 224, 200, 0.25)',
+  accent: '0 0 24px rgba(255, 111, 132, 0.35), 0 0 64px rgba(255, 111, 132, 0.15)',
+  accentSoft: '0 0 16px rgba(255, 111, 132, 0.25)',
   correct: '0 0 24px rgba(94, 229, 154, 0.35)',
-  wrong: '0 0 24px rgba(255, 107, 129, 0.35)',
+  wrong: '0 0 24px rgba(255, 61, 87, 0.35)',
   lift: '0 12px 40px rgba(0, 0, 0, 0.45)',
 } as const
 
