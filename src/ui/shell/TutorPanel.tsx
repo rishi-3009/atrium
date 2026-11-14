@@ -86,7 +86,8 @@ function Body({ content, partId }: BodyProps) {
   }, [mcqs, partId])
   const mcq = questions[q]
 
-  const needsOnline = lang !== 'en' && !ex.streaming && ex.source === 'notes'
+  const needsOnline =
+    lang !== 'en' && !ex.streaming && (ex.source === 'notes' || ex.source === 'busy')
 
   if (mode === 'quiz' && mcq) {
     const reviseLabel = definition.parts.find((p) => p.id === revise)?.label
@@ -189,7 +190,9 @@ function Body({ content, partId }: BodyProps) {
               lineHeight: 1.5,
             }}
           >
-            Hindi and Marathi need the online tutor. This is the English note.
+            {ex.source === 'busy'
+              ? 'The tutor is resting for a minute. This is the English note. Try again soon.'
+              : 'Hindi and Marathi need the online tutor. This is the English note.'}
           </motion.p>
         )}
       </AnimatePresence>
