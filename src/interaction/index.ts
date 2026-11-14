@@ -1,1 +1,1 @@
-export { startHandInteraction } from './controller'
+export { holdSqueezeToExplode, startHandInteraction } from './controller'

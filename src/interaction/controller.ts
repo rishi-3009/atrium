@@ -27,6 +27,17 @@ const INDEX_TIP = 8
 
 type Mode = 'idle' | 'rotate' | 'pull' | 'spread'
 
+let squeezeUntil = 0
+
+/**
+ * For models that are driven by squeezing: while a model keeps calling this
+ * every frame, bringing two pinched hands together raises `explode`, and
+ * moving them apart lowers it. It lapses by itself when the model goes away.
+ */
+export function holdSqueezeToExplode(): void {
+  squeezeUntil = performance.now() + 300
+}
+
 interface Pt {
   x: number
   y: number
@@ -167,7 +178,8 @@ export function startHandInteraction(): () => void {
         spreadBase = s.explode
         spreadD0 = d
       }
-      s.setExplode(spreadBase + (d - spreadD0) * SPREAD_GAIN)
+      const sign = now < squeezeUntil ? -1 : 1
+      s.setExplode(spreadBase + (d - spreadD0) * SPREAD_GAIN * sign)
       leave(canvas)
       return
     }

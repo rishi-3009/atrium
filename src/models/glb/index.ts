@@ -6,6 +6,7 @@ import type { ModelContent } from '../../content/types'
 import { buildCell } from './cell'
 import { buildFlower } from './flower'
 import { buildHeart } from './heart'
+import { proceduralModels } from '../procedural'
 
 export interface GlbModel {
   id: string
@@ -14,9 +15,10 @@ export interface GlbModel {
   content: ModelContent
 }
 
-/** Heart, cell and flower. Built in code, so there are no model files to ship. */
+/** Every model the stage can open. All built in code, so there are no model files to ship. */
 export const glbModels: Record<string, GlbModel> = {
   heart: { id: 'heart', build: buildHeart, content: heart },
   cell: { id: 'cell', build: buildCell, content: cell },
   flower: { id: 'flower', build: buildFlower, content: flower },
+  ...proceduralModels,
 }
