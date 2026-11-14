@@ -1,3 +1,4 @@
+import { makeLimiter } from './_limit.js'
 import { LIMITS, MAX_REPLY_TOKENS, RATE, TUTOR_URL } from './config.js'
 
 type Lang = 'en' | 'hi' | 'mr'
@@ -72,22 +73,7 @@ function userMessage(r: TutorRequest): string {
   return `PART: ${r.partLabel}\nLEVEL: ${r.level === 'neet' ? 'NEET' : `Class ${r.level}`}. ${LEVEL_STYLE[r.level]}\nLANGUAGE: ${LANG_NAME[r.lang]}\n\nNOTE:\n${r.note || '(empty)'}${earlier}`
 }
 
-/** Hits per visitor. Memory is per server instance, so this is a best-effort guard, not a guarantee. */
-const hits = new Map<string, number[]>()
-
-function limited(request: Request, now = Date.now()): boolean {
-  const who = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  const recent = (hits.get(who) ?? []).filter((t) => now - t < 86_400_000)
-  const lastMinute = recent.filter((t) => now - t < 60_000).length
-  if (lastMinute >= RATE.perMinute || recent.length >= RATE.perDay) {
-    hits.set(who, recent)
-    return true
-  }
-  recent.push(now)
-  hits.set(who, recent)
-  if (hits.size > 5000) hits.clear()
-  return false
-}
+const limited = makeLimiter(RATE.perMinute, RATE.perDay)
 
 interface GeminiChunk {
   candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] } }[]
