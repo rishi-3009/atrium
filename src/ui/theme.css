@@ -4,7 +4,7 @@
 @import '@fontsource-variable/noto-sans-devanagari';
 
 /* Mirrors src/ui/tokens.ts. Change values there first. */
-@theme {
+:root {
   --color-base: #14060a;
   --color-raised: #1d0a10;
   --color-ink: #fff0f1;
@@ -23,6 +23,15 @@ body,
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--color-ink);
 }
 
 ::selection {

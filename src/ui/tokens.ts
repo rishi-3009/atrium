@@ -54,12 +54,12 @@ export const font = {
 /** Type scale: size / line height / weight / tracking. */
 export const type = {
   hero: { size: '3.5rem', line: '1.05', weight: 700, tracking: '-0.03em' },
-  h1: { size: '2.25rem', line: '1.15', weight: 700, tracking: '-0.02em' },
-  h2: { size: '1.5rem', line: '1.25', weight: 600, tracking: '-0.015em' },
-  h3: { size: '1.125rem', line: '1.35', weight: 600, tracking: '-0.01em' },
-  body: { size: '0.9375rem', line: '1.6', weight: 400, tracking: '0' },
-  small: { size: '0.8125rem', line: '1.5', weight: 400, tracking: '0' },
-  label: { size: '0.6875rem', line: '1.2', weight: 600, tracking: '0.12em' },
+  h1: { size: '2.75rem', line: '1.15', weight: 700, tracking: '-0.02em' },
+  h2: { size: '1.75rem', line: '1.25', weight: 600, tracking: '-0.015em' },
+  h3: { size: '1.3rem', line: '1.35', weight: 600, tracking: '-0.01em' },
+  body: { size: '1.0625rem', line: '1.6', weight: 400, tracking: '0' },
+  small: { size: '0.9375rem', line: '1.5', weight: 400, tracking: '0' },
+  label: { size: '0.75rem', line: '1.2', weight: 600, tracking: '0.12em' },
 } as const
 
 /** 4px base grid. */
