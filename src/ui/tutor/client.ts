@@ -16,7 +16,15 @@ export interface ExplainRequest {
   history: string[]
 }
 
-export type ExplainSource = 'tutor' | 'notes'
+/** 'busy' means the tutor refused for now (too many requests), so the note is shown instead. */
+export type ExplainSource = 'tutor' | 'notes' | 'busy'
+
+/** Finished tutor replies, so going back to a part or language costs no new request. */
+const cache = new Map<string, string>()
+const keyOf = (r: ExplainRequest) => `${r.modelId}:${r.partId}:${r.lang}:${r.level}`
+
+/** Wait before asking, so a quick run of clicks sends only the last one. */
+const DEBOUNCE_MS = 350
 
 const sleep = (ms: number, signal: AbortSignal) =>
   new Promise<void>((resolve) => {
@@ -25,7 +33,11 @@ const sleep = (ms: number, signal: AbortSignal) =>
   })
 
 /** Streams the stored NCERT note word by word. Used when the API is missing or offline. */
-async function streamNotes(note: string, onChunk: (s: string) => void, signal: AbortSignal): Promise<void> {
+async function streamNotes(
+  note: string,
+  onChunk: (s: string) => void,
+  signal: AbortSignal,
+): Promise<void> {
   const words = note.split(/(\s+)/)
   for (let i = 0; i < words.length && !signal.aborted; i += 2) {
     onChunk(words.slice(i, i + 2).join(''))
@@ -33,16 +45,23 @@ async function streamNotes(note: string, onChunk: (s: string) => void, signal: A
   }
 }
 
-async function streamTutor(req: ExplainRequest, onChunk: (s: string) => void, signal: AbortSignal): Promise<boolean> {
+type TutorResult = 'ok' | 'busy' | 'fail'
+
+async function streamTutor(
+  req: ExplainRequest,
+  onChunk: (s: string) => void,
+  signal: AbortSignal,
+): Promise<TutorResult> {
   const res = await fetch('/api/tutor', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
     signal,
   })
+  if (res.status === 429) return 'busy'
   const type = res.headers.get('content-type') ?? ''
   // the dev server answers unknown paths with index.html, which is not a tutor reply
-  if (!res.ok || !res.body || type.includes('text/html')) return false
+  if (!res.ok || !res.body || type.includes('text/html')) return 'fail'
   const reader = res.body.getReader()
   const decoder = new TextDecoder()
   let got = false
@@ -55,23 +74,41 @@ async function streamTutor(req: ExplainRequest, onChunk: (s: string) => void, si
       onChunk(text)
     }
   }
-  return got
+  return got ? 'ok' : 'fail'
 }
 
 /**
  * Explains a part. Tries the tutor API first and falls back to the stored
  * note, so the panel always has something to show.
  */
-export async function explain(req: ExplainRequest, onChunk: (s: string) => void, signal: AbortSignal): Promise<ExplainSource> {
+export async function explain(
+  req: ExplainRequest,
+  onChunk: (s: string) => void,
+  signal: AbortSignal,
+): Promise<ExplainSource> {
+  const k = keyOf(req)
+  const saved = cache.get(k)
+  if (saved) {
+    onChunk(saved)
+    return 'tutor'
+  }
+
+  await sleep(DEBOUNCE_MS, signal)
+  if (signal.aborted) return 'notes'
+
+  let text = ''
+  let result: TutorResult = 'fail'
   try {
-    let got = false
-    const ok = await streamTutor(req, (s) => ((got = true), onChunk(s)), signal)
-    if (ok) return 'tutor'
-    // a stream that broke half way keeps what it already sent
-    if (got) return 'tutor'
+    result = await streamTutor(req, (s) => ((text += s), onChunk(s)), signal)
   } catch {
     if (signal.aborted) return 'notes'
   }
+  if (result === 'ok') {
+    if (!signal.aborted) cache.set(k, text)
+    return 'tutor'
+  }
+  // a stream that broke half way keeps what it already sent
+  if (text) return 'tutor'
   await streamNotes(req.note, onChunk, signal)
-  return 'notes'
+  return result === 'busy' ? 'busy' : 'notes'
 }
