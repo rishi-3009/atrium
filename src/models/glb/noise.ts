@@ -225,3 +225,75 @@ export function leafTextures(o: LeafTextureOptions): { map: DataTexture; bump: D
   const b = finish(bump, size, false, false)
   return { map: a, bump: b }
 }
+
+export interface VeinedOptions {
+  size?: number
+  base: string
+  mottle: string
+  /** Colour of the larger veins. */
+  vein: string
+  /** Colour of the fine capillary network. */
+  fine: string
+  seed: number
+  /** 0-1: how much of the surface the network covers. */
+  density?: number
+}
+
+const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
+const smoothstep = (a: number, b: number, x: number) => {
+  const t = clamp01((x - a) / (b - a))
+  return t * t * (3 - 2 * t)
+}
+
+/**
+ * Muscle skin with a dense network of veins: broad colour patches, fine
+ * muscle grain, and three layers of thin branching lines (the zero
+ * contours of smooth noise form connected, vein-like webs). Returns a
+ * colour map and a bump map that raises the veins.
+ */
+export function veinedTissue(o: VeinedOptions): { map: DataTexture; bump: DataTexture } {
+  const size = o.size ?? 512
+  const k = 0.6 + (o.density ?? 0.6) * 0.8
+  const broad = fbmField({ size, fx: 5, fy: 5, octaves: 3, seed: o.seed })
+  const grain = fbmField({ size, fx: 34, fy: 7, octaves: 3, seed: o.seed + 1 })
+  const netA = fbmField({ size, fx: 5, fy: 5, octaves: 3, seed: o.seed + 2 })
+  const netB = fbmField({ size, fx: 11, fy: 11, octaves: 3, seed: o.seed + 3 })
+  const netC = fbmField({ size, fx: 24, fy: 24, octaves: 2, seed: o.seed + 4 })
+  const netD = fbmField({ size, fx: 48, fy: 48, octaves: 2, seed: o.seed + 5 })
+
+  const cBase = new Color(o.base)
+  const cMottle = new Color(o.mottle)
+  const cVein = new Color(o.vein)
+  const cFine = new Color(o.fine)
+  const c = new Color()
+  const col = new Uint8Array(size * size * 4)
+  const bmp = new Uint8Array(size * size * 4)
+
+  for (let i = 0; i < size * size; i++) {
+    const line = (f: number, w: number) => 1 - smoothstep(w * 0.4, w, Math.abs(f - 0.5))
+    const a = line(netA[i]!, 0.016 * k)
+    const b = line(netB[i]!, 0.014 * k)
+    const cc = line(netC[i]!, 0.012 * k)
+    const d = line(netD[i]!, 0.01 * k)
+
+    c.copy(cBase).lerp(cMottle, clamp01((broad[i]! - 0.5) * 2.2 + 0.5))
+    // muscle grain darkens and lightens the colour in thin strips
+    c.multiplyScalar(0.9 + (grain[i]! - 0.5) * 0.45)
+    c.lerp(cFine, Math.max(cc, d) * 0.7)
+    c.lerp(cFine, b * 0.8)
+    c.lerp(cVein, a * 0.95)
+    const s = c.clone().convertLinearToSRGB()
+    col[i * 4] = Math.round(clamp01(s.r) * 255)
+    col[i * 4 + 1] = Math.round(clamp01(s.g) * 255)
+    col[i * 4 + 2] = Math.round(clamp01(s.b) * 255)
+    col[i * 4 + 3] = 255
+
+    const h = clamp01(0.42 + (grain[i]! - 0.5) * 0.35 + a * 0.5 + b * 0.32 + cc * 0.2 + d * 0.12)
+    const v = Math.round(h * 255)
+    bmp[i * 4] = v
+    bmp[i * 4 + 1] = v
+    bmp[i * 4 + 2] = v
+    bmp[i * 4 + 3] = 255
+  }
+  return { map: finish(col, size, true, true), bump: finish(bmp, size, false, true) }
+}
