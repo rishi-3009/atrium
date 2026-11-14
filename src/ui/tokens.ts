@@ -40,6 +40,7 @@ export const color = {
   },
   state: {
     correct: '#5ee59a',
+    correctGlow: 'rgba(94, 229, 154, 0.45)',
     wrong: '#ff3d57',
     warn: '#ffc766',
   },
