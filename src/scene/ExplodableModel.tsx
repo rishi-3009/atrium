@@ -1,9 +1,9 @@
 import { useEffect, useMemo } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
-import { Box3, MathUtils, Mesh, Vector3, type Object3D } from 'three'
+import { Box3, MathUtils, Mesh, MeshStandardMaterial, PointLight, Vector3, type Object3D } from 'three'
 import { useSceneStore } from '../shared/stores'
 import type { ModelDefinition } from '../shared/types'
-import { focus } from './focus'
+import { anchors, focus } from './focus'
 import { PartLabel } from './PartLabel'
 import { makePartUniforms, patchMaterial, type PartUniforms } from './partMaterial'
 
@@ -33,6 +33,32 @@ interface PartState {
 const STAGGER = 0.35
 const STIFFNESS = 150
 const DAMPING = 2 * Math.sqrt(STIFFNESS) * 0.7
+
+/** Seconds per beat. Slow, about 46 a minute, so it reads as calm. */
+const BEAT_PERIOD = 1.3
+
+/** Lub-dub: a strong pulse, then a softer one. 0-1. */
+function beatAt(t: number): number {
+  const p = (t % BEAT_PERIOD) / BEAT_PERIOD
+  const lub = Math.exp(-(((p - 0.1) / 0.06) ** 2))
+  const dub = 0.55 * Math.exp(-(((p - 0.3) / 0.07) ** 2))
+  return Math.min(1, lub + dub)
+}
+
+interface Beat {
+  base: number
+  /** Groups that swell about their own centre. */
+  pulses: Object3D[]
+  mats: MeshStandardMaterial[]
+  light: PointLight | null
+}
+
+function applyBeat(beat: Beat, time: number): void {
+  const b = beatAt(time)
+  for (const g of beat.pulses) g.scale.setScalar(1 + 0.045 * b)
+  for (const m of beat.mats) m.emissiveIntensity = beat.base + 0.5 * b
+  if (beat.light) beat.light.intensity = (beat.light.userData.beatLight as number) * (0.35 + b)
+}
 
 const box = new Box3()
 const center = new Vector3()
@@ -106,12 +132,34 @@ export function ExplodableModel({ definition, object, spread = 0.9 }: Props) {
         })
       }
       focus.point = null
+      anchors.clear()
     },
     [parts],
   )
 
-  useFrame((_, delta) => {
+  // models can ask for a heartbeat: `userData.beat = { base }` on the root
+  const beating = useMemo(() => {
+    const cfg = object.userData.beat as { base: number; pulses: Object3D[] } | undefined
+    if (!cfg) return null
+    const mats: MeshStandardMaterial[] = []
+    let light: PointLight | null = null
+    object.traverse((c) => {
+      if (c instanceof PointLight && c.userData.beatLight) light = c
+    })
+    // glow only what beats: the materials inside the pulsing groups
+    for (const g of cfg.pulses) {
+      g.traverse((c) => {
+        if (!(c instanceof Mesh)) return
+        const list = Array.isArray(c.material) ? c.material : [c.material]
+        list.forEach((m) => m instanceof MeshStandardMaterial && m.emissiveIntensity > 0 && mats.push(m))
+      })
+    }
+    return { base: cfg.base, pulses: cfg.pulses, mats, light: light as PointLight | null }
+  }, [object])
+
+  useFrame(({ clock }, delta) => {
     const dt = Math.min(delta, 1 / 30)
+    if (beating) applyBeat(beating, clock.elapsedTime)
     const { explode, hoveredPart, selectedPart, pull } = useSceneStore.getState()
     const n = parts.length
 
@@ -153,10 +201,23 @@ export function ExplodableModel({ definition, object, spread = 0.9 }: Props) {
     return undefined
   }
 
+  const remember = (p: PartState, e: ThreeEvent<PointerEvent> | ThreeEvent<MouseEvent>) => {
+    const local = p.node.worldToLocal(e.point.clone())
+    anchors.set(p.id, local)
+  }
+  const onMove = (e: ThreeEvent<PointerEvent>) => {
+    const p = partOf(e.object)
+    if (!p) return
+    e.stopPropagation()
+    remember(p, e)
+    // moving straight from one part onto another must switch the hover
+    if (useSceneStore.getState().hoveredPart !== p.id) useSceneStore.getState().setHovered(p.id)
+  }
   const onOver = (e: ThreeEvent<PointerEvent>) => {
     const p = partOf(e.object)
     if (!p) return
     e.stopPropagation()
+    remember(p, e)
     useSceneStore.getState().setHovered(p.id)
     document.body.style.cursor = 'pointer'
   }
@@ -170,6 +231,7 @@ export function ExplodableModel({ definition, object, spread = 0.9 }: Props) {
     const p = partOf(e.object)
     if (!p) return
     e.stopPropagation()
+    remember(p, e)
     const s = useSceneStore.getState()
     s.setSelected(s.selectedPart === p.id ? null : p.id)
   }
@@ -179,10 +241,10 @@ export function ExplodableModel({ definition, object, spread = 0.9 }: Props) {
 
   return (
     <group>
-      <primitive object={object} onPointerOver={onOver} onPointerOut={onOut} onClick={onClick} />
-      {hoverPart && <PartLabel key={`h-${hoverPart.id}`} label={hoverPart.label} target={hoverPart.node} side="right" />}
+      <primitive object={object} onPointerOver={onOver} onPointerMove={onMove} onPointerOut={onOut} onClick={onClick} />
+      {hoverPart && <PartLabel key={`h-${hoverPart.id}`} label={hoverPart.label} target={hoverPart.node} side="right" anchor={() => anchors.get(hoverPart.id)} />}
       {selectPart && selectPart.id !== hovered && (
-        <PartLabel key={`s-${selectPart.id}`} label={selectPart.label} target={selectPart.node} side="left" />
+        <PartLabel key={`s-${selectPart.id}`} label={selectPart.label} target={selectPart.node} side="left" anchor={() => anchors.get(selectPart.id)} />
       )}
     </group>
   )
