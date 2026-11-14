@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { glbModels } from '../../models/glb'
 import { Card } from '../components/Card'
 import { Chip } from '../components/Chip'
 import { useNavStore } from '../nav'
 import { catalog, modelMastery, parseChapter, type LearnerProgress } from '../progress'
 import { ProgressRing } from '../components/ProgressRing'
-import { color, font, radius, spring, type as t } from '../tokens'
-import { thumbnail } from './thumbnails'
+import { color, font, spring, type as t } from '../tokens'
+import { LibrarySide } from './LibrarySide'
+import { ModelThumb } from './ModelThumb'
 import { TOP_BAR_HEIGHT } from './TopBar'
+import { useViewport } from './useViewport'
 
 type Filter = 'all' | 10 | 11 | 12
 
@@ -19,49 +20,11 @@ const filters: { id: Filter; label: string }[] = [
   { id: 12, label: 'Class 12' },
 ]
 
-/** The model's picture, drawn on first view and cached. */
-function Thumb({ id }: { id: string }) {
-  const [src, setSrc] = useState<string | null>(null)
-  useEffect(() => {
-    let live = true
-    const model = glbModels[id]
-    if (!model) return
-    thumbnail(model)
-      .then((u) => live && setSrc(u))
-      .catch(() => undefined)
-    return () => {
-      live = false
-    }
-  }, [id])
-  return (
-    <div
-      style={{
-        flex: 'none',
-        width: 220,
-        height: 156,
-        borderRadius: radius.md,
-        overflow: 'hidden',
-        background: `radial-gradient(ellipse at 50% 45%, ${color.accent.wash}, transparent 72%), ${color.bg.raised}`,
-        border: `1px solid ${color.line.subtle}`,
-      }}
-    >
-      {src && (
-        <motion.img
-          src={src}
-          alt=""
-          initial={{ opacity: 0, scale: 0.94 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={spring.smooth}
-          style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
-        />
-      )}
-    </div>
-  )
-}
-
 export function Library({ progress }: { progress: LearnerProgress }) {
   const [filter, setFilter] = useState<Filter>('all')
   const openModel = useNavStore((s) => s.openModel)
+  const { width } = useViewport()
+  const wide = width >= 1180
 
   const cards = useMemo(
     () =>
@@ -89,7 +52,8 @@ export function Library({ progress }: { progress: LearnerProgress }) {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gap: 16, maxWidth: 1120 }}>
+      <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start', flexDirection: wide ? 'row' : 'column-reverse' }}>
+      <div style={{ display: 'grid', gap: 16, flex: 1, minWidth: 0, width: '100%' }}>
         {cards.map(({ model, shown }, i) => {
           const d = model.content.definition
           return (
@@ -100,7 +64,7 @@ export function Library({ progress }: { progress: LearnerProgress }) {
               transition={{ ...spring.smooth, delay: i * 0.06 }}
             >
               <Card interactive onClick={() => openModel(model.id)} style={{ display: 'flex', alignItems: 'center', gap: 24, padding: 16 }}>
-                <Thumb id={model.id} />
+                <ModelThumb id={model.id} />
                 <div style={{ flex: 1, minWidth: 0, display: 'grid', gap: 12 }}>
                   <div>
                     <h2 style={{ fontFamily: font.display, fontSize: t.h2.size, fontWeight: 700, margin: 0, letterSpacing: t.h2.tracking }}>{d.title}</h2>
@@ -126,6 +90,8 @@ export function Library({ progress }: { progress: LearnerProgress }) {
             </motion.div>
           )
         })}
+      </div>
+      <LibrarySide progress={progress} sticky={wide} />
       </div>
     </div>
   )
