@@ -8,6 +8,7 @@ import { ProgressRing } from '../components/ProgressRing'
 import { color, font, spring, type as t } from '../tokens'
 import { LibrarySide } from './LibrarySide'
 import { ModelThumb } from './ModelThumb'
+import { PhotoScan } from './PhotoScan'
 import { TOP_BAR_HEIGHT } from './TopBar'
 import { useViewport } from './useViewport'
 
@@ -43,6 +44,8 @@ export function Library({ progress }: { progress: LearnerProgress }) {
       <p style={{ color: color.text.secondary, margin: '8px 0 24px', maxWidth: 520 }}>
         Pick a diagram from your NCERT chapters and open it in 3D.
       </p>
+
+      <PhotoScan />
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 28, flexWrap: 'wrap' }}>
         {filters.map((f) => (
