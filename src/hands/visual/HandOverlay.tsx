@@ -59,7 +59,7 @@ export function HandOverlay() {
             depth: false,
           }}
           onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
-          style={{ background: 'transparent' }}
+          style={{ background: 'transparent', pointerEvents: 'none' }}
         >
           <HandSkeleton side="left" />
           <HandSkeleton side="right" />
