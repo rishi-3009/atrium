@@ -5,12 +5,12 @@
 
 /* Mirrors src/ui/tokens.ts. Change values there first. */
 @theme {
-  --color-base: #07090d;
-  --color-raised: #0d1117;
-  --color-ink: #eef2f7;
-  --color-ink-2: #a4afbf;
-  --color-ink-3: #6b7687;
-  --color-accent: #3de0c8;
+  --color-base: #14060a;
+  --color-raised: #1d0a10;
+  --color-ink: #fff0f1;
+  --color-ink-2: #e0b4ba;
+  --color-ink-3: #a4747c;
+  --color-accent: #ff6f84;
   --font-display: 'Space Grotesk Variable', 'Inter Variable', 'Noto Sans Devanagari Variable', system-ui, sans-serif;
   --font-sans: 'Inter Variable', 'Noto Sans Devanagari Variable', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
@@ -26,7 +26,7 @@ body,
 }
 
 ::selection {
-  background: rgba(61, 224, 200, 0.3);
+  background: rgba(255, 111, 132, 0.35);
 }
 
 :focus-visible {

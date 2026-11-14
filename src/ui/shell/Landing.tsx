@@ -1,55 +1,30 @@
 import { useEffect } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { useFrame } from '@react-three/fiber'
-import { glbModels } from '../../models/glb'
-import { ExplodableModel, Stage } from '../../scene'
+import { motion } from 'framer-motion'
 import { useSceneStore } from '../../shared/stores'
 import { Button } from '../components/Button'
 import { Chip } from '../components/Chip'
 import { startDemo } from '../demo'
 import { useNavStore } from '../nav'
 import { color, font, spring } from '../tokens'
-import { Loader } from './Loader'
 import { StageBoundary } from './StageBoundary'
-import { useBuilt } from './useBuilt'
-
-/** Slowly pulls the hero model apart and puts it back together. */
-function AutoExplode() {
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime
-    const v = 0.5 - 0.5 * Math.cos(t * 0.45)
-    useSceneStore.getState().setExplode(Math.min(1, v * 1.15))
-  })
-  return null
-}
+import { VesselHero } from './VesselHero'
 
 export function Landing() {
   const go = useNavStore((s) => s.go)
-  const openModel = useNavStore((s) => s.openModel)
-  const heart = glbModels.heart!
-  const object = useBuilt(heart)
 
   useEffect(() => {
     const s = useSceneStore.getState()
     s.setSelected(null)
     s.setHovered(null)
     s.setExplode(0)
-    s.setRotation(0.1, -0.5)
-    return () => useSceneStore.getState().setExplode(0)
   }, [])
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
-      <div style={{ position: 'absolute', inset: 0, left: '28%' }}>
+      <div style={{ position: 'absolute', inset: 0 }}>
         <StageBoundary>
-          {object && (
-            <Stage distance={11}>
-              <AutoExplode />
-              <ExplodableModel definition={heart.content.definition} object={object} spread={0.7} />
-            </Stage>
-          )}
+          <VesselHero />
         </StageBoundary>
-        <AnimatePresence>{!object && <Loader key="load" label="Building the heart" />}</AnimatePresence>
       </div>
       <div
         style={{
@@ -79,7 +54,7 @@ export function Landing() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...spring.smooth, delay: 0.06 }}
-          style={{ fontFamily: font.display, fontSize: 'clamp(2.6rem, 5vw, 4.25rem)', fontWeight: 600, lineHeight: 1.04, letterSpacing: '-0.03em', margin: 0 }}
+          style={{ fontFamily: font.display, fontSize: 'clamp(2.6rem, 5vw, 4.25rem)', fontWeight: 700, lineHeight: 1.04, letterSpacing: '-0.03em', margin: 0, color: color.text.primary, textShadow: '0 2px 24px rgba(20, 6, 10, 0.6)' }}
         >
           Take biology apart with your hands.
         </motion.h1>
@@ -97,10 +72,7 @@ export function Landing() {
           transition={{ ...spring.smooth, delay: 0.18 }}
           style={{ display: 'flex', gap: 12, flexWrap: 'wrap', pointerEvents: 'auto' }}
         >
-          <Button onClick={() => openModel('heart')}>Open the heart</Button>
-          <Button variant="ghost" onClick={() => go('library')}>
-            Browse chapters
-          </Button>
+          <Button onClick={() => go('library')}>Start exploring</Button>
           <Button variant="ghost" onClick={startDemo}>
             Watch the demo
           </Button>
