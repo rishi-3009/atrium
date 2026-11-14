@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
-import { Box3, MathUtils, Mesh, MeshStandardMaterial, PointLight, Vector3, type Object3D } from 'three'
+import { Box3, MathUtils, Mesh, MeshStandardMaterial, PointLight, Vector3, type Intersection, type Object3D } from 'three'
 import { useSceneStore } from '../shared/stores'
 import type { ModelDefinition } from '../shared/types'
 import { anchors, focus } from './focus'
@@ -58,6 +58,13 @@ function applyBeat(beat: Beat, time: number): void {
   for (const g of beat.pulses) g.scale.setScalar(1 + 0.045 * b)
   for (const m of beat.mats) m.emissiveIntensity = beat.base + 0.5 * b
   if (beat.light) beat.light.intensity = (beat.light.userData.beatLight as number) * (0.35 + b)
+}
+
+/** A faint, see-through mesh: pointing passes through it to solid parts inside. */
+function seeThrough(o: Object3D): boolean {
+  if (!(o instanceof Mesh)) return false
+  const m = Array.isArray(o.material) ? o.material[0] : o.material
+  return !!m && m.transparent && m.opacity < 0.6
 }
 
 const box = new Box3()
@@ -201,39 +208,61 @@ export function ExplodableModel({ definition, object, spread = 0.9 }: Props) {
     return undefined
   }
 
-  const remember = (p: PartState, e: ThreeEvent<PointerEvent> | ThreeEvent<MouseEvent>) => {
-    const local = p.node.worldToLocal(e.point.clone())
-    anchors.set(p.id, local)
+  /**
+   * Picks the part under the pointer from every hit along the ray. A
+   * see-through shell (a nucleus envelope, a mitochondrion's outer layer)
+   * gives way to a solid part inside it, so the nucleolus can be pointed
+   * at through the nucleus.
+   */
+  const pick = (hits: Intersection[] | undefined): { part: PartState; point: Vector3 } | null => {
+    if (!hits) return null
+    for (let i = 0; i < hits.length; i++) {
+      const h = hits[i]!
+      const part = partOf(h.object)
+      if (!part) continue
+      if (!seeThrough(h.object)) return { part, point: h.point }
+      box.setFromObject(h.object)
+      for (let j = i + 1; j < hits.length; j++) {
+        const x = hits[j]!
+        if (!box.containsPoint(x.point)) continue
+        const inner = partOf(x.object)
+        if (inner && !seeThrough(x.object)) return { part: inner, point: x.point }
+      }
+      return { part, point: h.point }
+    }
+    return null
   }
-  const onMove = (e: ThreeEvent<PointerEvent>) => {
-    const p = partOf(e.object)
-    if (!p) return
-    e.stopPropagation()
-    remember(p, e)
-    // moving straight from one part onto another must switch the hover
-    if (useSceneStore.getState().hoveredPart !== p.id) useSceneStore.getState().setHovered(p.id)
-  }
-  const onOver = (e: ThreeEvent<PointerEvent>) => {
-    const p = partOf(e.object)
-    if (!p) return
-    e.stopPropagation()
-    remember(p, e)
-    useSceneStore.getState().setHovered(p.id)
+
+  const hoverFrom = (e: ThreeEvent<PointerEvent>) => {
+    const hit = pick(e.intersections)
+    const s = useSceneStore.getState()
+    if (!hit) {
+      if (s.hoveredPart) s.setHovered(null)
+      document.body.style.cursor = ''
+      return
+    }
+    anchors.set(hit.part.id, hit.part.node.worldToLocal(hit.point.clone()))
+    if (s.hoveredPart !== hit.part.id) s.setHovered(hit.part.id)
     document.body.style.cursor = 'pointer'
   }
-  const onOut = (e: ThreeEvent<PointerEvent>) => {
-    const p = partOf(e.object)
-    const s = useSceneStore.getState()
-    if (p && s.hoveredPart === p.id) s.setHovered(null)
-    document.body.style.cursor = ''
-  }
-  const onClick = (e: ThreeEvent<MouseEvent>) => {
-    const p = partOf(e.object)
-    if (!p) return
+
+  const onMove = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
-    remember(p, e)
+    hoverFrom(e)
+  }
+  const onOver = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation()
+    hoverFrom(e)
+  }
+  // on leaving a mesh, look again at what is still under the pointer
+  const onOut = (e: ThreeEvent<PointerEvent>) => hoverFrom(e)
+  const onClick = (e: ThreeEvent<MouseEvent>) => {
+    const hit = pick(e.intersections)
+    if (!hit) return
+    e.stopPropagation()
+    anchors.set(hit.part.id, hit.part.node.worldToLocal(hit.point.clone()))
     const s = useSceneStore.getState()
-    s.setSelected(s.selectedPart === p.id ? null : p.id)
+    s.setSelected(s.selectedPart === hit.part.id ? null : hit.part.id)
   }
 
   const hoverPart = parts.find((p) => p.id === hovered)
