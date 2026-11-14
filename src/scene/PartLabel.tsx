@@ -2,28 +2,43 @@ import { useRef } from 'react'
 import { Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Vector3, type Group, type Object3D } from 'three'
+import { Box3, MathUtils, Vector3, type Group, type Object3D } from 'three'
 import { blur, color, font, glow, radius, spring, z } from '../ui/tokens'
 
 interface Props {
   label: string
-  /** The part's node; the label follows its world centre. */
+  /** The part's node; the label follows the centre of its geometry. */
   target: Object3D
   /** Which way the label sits, so two labels never overlap. */
   side: 'right' | 'left'
+  /** A point on the part, in the part's own space, e.g. where the pointer hit it. */
+  anchor?: () => Vector3 | undefined
 }
 
 const world = new Vector3()
+const box = new Box3()
 
 /** Floating name tag with a leader line, pinned to a part. */
-export function PartLabel({ label, target, side }: Props) {
+export function PartLabel({ label, target, side, anchor: getPoint }: Props) {
   const anchor = useRef<Group>(null)
+  const placed = useRef(false)
 
-  useFrame(() => {
+  useFrame((_, dt) => {
     const a = anchor.current
     if (!a?.parent) return
-    target.getWorldPosition(world)
-    a.position.copy(a.parent.worldToLocal(world))
+    // pin to the point the pointer hit; with none, the middle of what the part holds
+    const point = getPoint?.()
+    if (point) target.localToWorld(world.copy(point))
+    else box.setFromObject(target).getCenter(world)
+    const to = a.parent.worldToLocal(world)
+    if (!placed.current) {
+      a.position.copy(to)
+      placed.current = true
+    } else {
+      // glide, so the tag follows the pointer without jitter
+      const k = 1 - Math.exp(-18 * Math.min(dt, 1 / 30))
+      a.position.set(MathUtils.lerp(a.position.x, to.x, k), MathUtils.lerp(a.position.y, to.y, k), MathUtils.lerp(a.position.z, to.z, k))
+    }
   })
 
   const dir = side === 'right' ? 1 : -1
