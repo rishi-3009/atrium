@@ -9,6 +9,9 @@ import type { HandState, Handedness } from '@/shared/types'
  *   events, so the hand uses exactly the same code path as the mouse.
  * - Rotation, explode, pull and dwell are written straight to the scene store.
  *
+ * Page buttons (Show me, Next task, answers) work too: point at one to
+ * highlight it, hold still to press it, or pinch on it to press at once.
+ *
  * Gestures: point to hover, hold still on a part to select, pinch on empty
  * space and move to turn (with inertia), pinch a part and move to pull it
  * out (release lets it spring back), pinch with both hands and move them
@@ -49,6 +52,16 @@ function stageCanvas(): HTMLCanvasElement | null {
     if (getComputedStyle(c).pointerEvents !== 'none') return c
   }
   return null
+}
+
+const UI_SELECTOR = 'button, a[href], [role="button"], summary, input, select, textarea, [data-hand-click]'
+
+/** The page control under a window point, if any. The 3D canvas never counts. */
+function uiTargetAt(p: Pt): HTMLElement | null {
+  const el = document.elementFromPoint(p.x, p.y)
+  const hit = el instanceof Element ? el.closest<HTMLElement>(UI_SELECTOR) : null
+  if (!hit || hit.hasAttribute('disabled') || hit.getAttribute('aria-disabled') === 'true') return null
+  return hit
 }
 
 function send(canvas: HTMLCanvasElement, type: string, p: Pt, down: boolean) {
@@ -98,6 +111,24 @@ export function startHandInteraction(): () => void {
   let lastPinch: Pt | null = null
   let pullPart = ''
 
+  // page buttons: the one under the finger, how long it has been held, and the last one pressed
+  let uiEl: HTMLElement | null = null
+  let uiT = 0
+  let uiDone: HTMLElement | null = null
+  let uiPinched = false
+
+  const setUi = (el: HTMLElement | null, progress = 0) => {
+    if (uiEl && uiEl !== el) {
+      delete uiEl.dataset.handHover
+      uiEl.style.removeProperty('--hand-dwell')
+    }
+    uiEl = el
+    if (el) {
+      el.dataset.handHover = '1'
+      el.style.setProperty('--hand-dwell', String(progress))
+    }
+  }
+
   let spreadBase = 0
   let spreadD0 = 0
   let palmSeen = false
@@ -129,6 +160,7 @@ export function startHandInteraction(): () => void {
     const canvas = stageCanvas()
     if (hs.source !== 'camera' || !canvas) {
       if (active) {
+        setUi(null)
         leave(canvas)
         endMode()
         active = false
@@ -150,6 +182,7 @@ export function startHandInteraction(): () => void {
     }
 
     if (!hand) {
+      setUi(null)
       leave(canvas)
       endMode()
       return
@@ -190,6 +223,38 @@ export function startHandInteraction(): () => void {
       hand.gesture === 'point' ? (hand.landmarks[INDEX_TIP] ?? hand.pinchPoint) : hand.pinchPoint
     const client = toClient(aim)
     const pinching = hand.gesture === 'pinch'
+
+    // a page button under the finger: highlight it, press it on a hold or a pinch
+    const ui = mode === 'idle' ? uiTargetAt(client) : null
+    if (ui) {
+      leave(canvas)
+      if (pinching) {
+        if (!uiPinched) {
+          uiPinched = true
+          uiDone = ui
+          ui.click()
+        }
+        uiT = 0
+        setUi(ui, 1)
+      } else {
+        uiPinched = false
+        if (ui !== uiDone) {
+          uiT += dt
+          const d = Math.min(1, uiT / DWELL_S)
+          setUi(ui, d)
+          if (d >= 1) {
+            uiDone = ui
+            uiT = 0
+            ui.click()
+          }
+        } else setUi(ui, 0)
+      }
+      return
+    }
+    setUi(null)
+    uiT = 0
+    uiPinched = false
+    uiDone = null
 
     // hover runs through the stage's own pointer handlers
     if (!pointer || pointer.x !== client.x || pointer.y !== client.y) {
@@ -266,6 +331,7 @@ export function startHandInteraction(): () => void {
   raf = requestAnimationFrame(tick)
   return () => {
     cancelAnimationFrame(raf)
+    setUi(null)
     if (active) {
       leave(stageCanvas())
       endMode()

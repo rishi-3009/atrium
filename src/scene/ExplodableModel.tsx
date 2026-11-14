@@ -1,11 +1,17 @@
 import { useEffect, useMemo } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
-import { Box3, MathUtils, Mesh, MeshStandardMaterial, PointLight, Vector3, type Intersection, type Object3D } from 'three'
+import { Box3, Color, MathUtils, Mesh, MeshStandardMaterial, PointLight, Vector3, type Intersection, type Object3D } from 'three'
 import { useSceneStore } from '../shared/stores'
 import type { ModelDefinition } from '../shared/types'
+import { color } from '../ui/tokens'
 import { anchors, focus } from './focus'
+import { flashLevel } from './flash'
 import { PartLabel } from './PartLabel'
 import { makePartUniforms, patchMaterial, type PartUniforms } from './partMaterial'
+
+const RIM_DEFAULT = new Color(color.accent.base)
+const RIM_GOOD = new Color(color.state.correct)
+const RIM_BAD = new Color(color.state.wrong)
 
 interface Props {
   definition: ModelDefinition
@@ -187,7 +193,14 @@ export function ExplodableModel({ definition, object, spread = 0.9, ambientRim =
       const dimTarget = selectedPart && !isSelected && !isHover ? 1 : 0
       p.rim = MathUtils.damp(p.rim, rimTarget, 12, dt)
       p.dim = MathUtils.damp(p.dim, dimTarget, 6, dt)
-      p.uniforms.uRim.value = p.rim
+      const fl = flashLevel(p.id, performance.now())
+      if (fl) {
+        p.uniforms.uRimColor.value.copy(fl.kind === 'good' ? RIM_GOOD : RIM_BAD)
+        p.uniforms.uRim.value = Math.max(p.rim, fl.amount * 1.6)
+      } else {
+        p.uniforms.uRimColor.value.copy(RIM_DEFAULT)
+        p.uniforms.uRim.value = p.rim
+      }
       p.uniforms.uDim.value = p.dim
     })
 

@@ -29,14 +29,14 @@ export function ProgressRing({ value, size = 72, stroke = 6, label }: Props) {
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={color.accent.base}
+          stroke={color.state.correct}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={c}
           initial={{ strokeDashoffset: c }}
           animate={{ strokeDashoffset: c * (1 - v) }}
           transition={spring.gentle}
-          style={{ filter: `drop-shadow(0 0 6px ${color.accent.glow})` }}
+          style={{ filter: `drop-shadow(0 0 6px ${color.state.correctGlow})` }}
         />
       </svg>
       <span

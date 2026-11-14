@@ -42,3 +42,10 @@ h6 {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
 }
+
+/* A page control the tracked hand is pointing at. Brightens as the hold fills. */
+[data-hand-hover] {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  filter: brightness(calc(1 + var(--hand-dwell, 0) * 0.45));
+}
