@@ -58,6 +58,9 @@ export function CameraTile({
         height: H,
         zIndex: z.hud,
         pointerEvents: visible ? 'auto' : 'none',
+        // hidden from keyboard and screen readers too, but still mounted:
+        // the hand tracker holds the video element
+        visibility: visible ? 'visible' : 'hidden',
         overflow: 'hidden',
         borderRadius: radius.lg,
         background: color.bg.panelSolid,
