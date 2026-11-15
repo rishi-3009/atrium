@@ -1,4 +1,4 @@
-import { Bloom, DepthOfField, EffectComposer, Noise, Vignette } from '@react-three/postprocessing'
+import { Bloom, EffectComposer, Noise, Vignette } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
 
 /** 0 = lowest (no post), 1 = bloom + vignette, 2 = full. */
@@ -6,7 +6,7 @@ export type Quality = 0 | 1 | 2
 
 /**
  * Restrained post-processing. Effects drop away with quality so the frame
- * rate never drops first: depth of field goes first, then bloom and grain.
+ * rate never drops first: grain goes first, then bloom. No depth of field: it blurred the model.
  */
 /** `glow` 1 = default. Above 1 lowers the bloom threshold and lifts its strength. */
 export function Effects({ quality, glow = 1 }: { quality: Quality; glow?: number }) {
@@ -21,11 +21,6 @@ export function Effects({ quality, glow = 1 }: { quality: Quality; glow?: number
         mipmapBlur
       />
       <Vignette eskil={false} offset={0.25} darkness={0.75} />
-      {quality === 2 ? (
-        <DepthOfField focusDistance={0.025} focalLength={0.06} bokehScale={2.2} height={480} />
-      ) : (
-        <></>
-      )}
       {quality === 2 ? <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.35} /> : <></>}
     </EffectComposer>
   )
