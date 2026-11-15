@@ -16,6 +16,8 @@ interface Props {
 }
 
 const OVERVIEW_HEIGHT = 0.5
+/** How much further back the overview camera sits when fully exploded. */
+const EXPLODE_PULLBACK = 0.75
 const tmp = new Vector3()
 
 /**
@@ -30,7 +32,10 @@ export function CameraRig({ focusPoint, overviewDistance = 6.5, closeupDistance 
     const point = focus.point ?? focusPoint
     const closeup = selected !== null && point !== undefined && point !== null
     const target = closeup ? tmp.set(...point) : tmp.set(0, overviewLookY, 0)
-    const dist = closeup ? closeupDistance : overviewDistance
+    // step back as the model opens up, so the exploded parts stay in frame.
+    // The first parts are fully out well before explode reaches 1, so lead it.
+    const open = Math.min(1, useSceneStore.getState().explode * 1.5)
+    const dist = closeup ? closeupDistance : overviewDistance * (1 + EXPLODE_PULLBACK * open)
     // gentle idle drift so the scene is never frozen
     const t = clock.elapsedTime
     const driftX = Math.sin(t * 0.25) * 0.25
