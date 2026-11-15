@@ -21,7 +21,8 @@ export function Effects({ quality, glow = 1 }: { quality: Quality; glow?: number
         mipmapBlur
       />
       <Vignette eskil={false} offset={0.25} darkness={0.75} />
-      {quality === 2 ? <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.35} /> : <></>}
+      {/* overlay, not soft light: soft light breaks into coloured speckles on highlights brighter than white */}
+      {quality === 2 ? <Noise premultiply blendFunction={BlendFunction.OVERLAY} opacity={0.35} /> : <></>}
     </EffectComposer>
   )
 }

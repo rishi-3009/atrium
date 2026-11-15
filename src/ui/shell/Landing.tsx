@@ -162,7 +162,7 @@ export function Landing() {
           style={{ display: 'flex', gap: 12, flexWrap: 'wrap', pointerEvents: 'auto', marginLeft: '0.2em' }}
         >
           <Button onClick={() => go('library')}>Start exploring →</Button>
-          <Button variant="ghost" onClick={startDemo}>
+          <Button variant="ghost" onClick={() => startDemo()}>
             Watch the demo
           </Button>
         </motion.div>

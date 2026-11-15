@@ -48,9 +48,12 @@ export function AppShell({ camera, progress: external }: Props) {
     return () => window.clearTimeout(t)
   }, [notice, camera.status])
 
-  // ?demo=1 starts the scripted tour, for recording the video.
+  // ?demo=1 starts the scripted tour, for recording the video. ?demo=<chapter>
+  // plays one chapter. &captions=0 hides the caption bar.
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).has('demo')) startDemo()
+    const params = new URLSearchParams(window.location.search)
+    const demo = params.get('demo')
+    if (demo !== null) startDemo(demo, { captions: params.get('captions') !== '0' })
   }, [])
 
   return (

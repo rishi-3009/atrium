@@ -1,4 +1,4 @@
-import { Suspense, useState, type ReactNode } from 'react'
+import { Suspense, useRef, useState, type ReactNode } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { PerformanceMonitor } from '@react-three/drei'
 import { ACESFilmicToneMapping, SRGBColorSpace } from 'three'
@@ -6,6 +6,9 @@ import { CameraRig, type Vec3Tuple } from './CameraRig'
 import { Effects, type Quality } from './Effects'
 import { Lighting } from './Lighting'
 import { ModelRoot } from './ModelRoot'
+
+/** After this many drops the quality stays where it is. */
+const MAX_DROPS = 3
 
 interface Props {
   /** The model to show. Parts should be named meshes. */
@@ -22,11 +25,13 @@ interface Props {
 
 /**
  * The 3D canvas: lighting, post-processing, camera rig and adaptive
- * resolution. Quality steps down when the frame rate drops.
+ * resolution. Quality steps down when the frame rate drops and comes back
+ * when it recovers. After a few drops it stays low instead of flipping.
  */
 export function Stage({ children, focusPoint, distance = 6.5, glow = 1, lookY = 0 }: Props) {
   const [quality, setQuality] = useState<Quality>(2)
   const [dpr, setDpr] = useState(1.5)
+  const drops = useRef(0)
 
   return (
     <Canvas
@@ -40,18 +45,17 @@ export function Stage({ children, focusPoint, distance = 6.5, glow = 1, lookY = 
       }}
     >
       <PerformanceMonitor
-        flipflops={3}
         onDecline={() => {
+          drops.current += 1
           setQuality((q) => (q > 0 ? ((q - 1) as Quality) : q))
           setDpr((d) => Math.max(1, d - 0.25))
         }}
         onIncline={() => {
+          // drei counts a good reading as a flip too, so its own fallback would
+          // switch the effects off on a fast machine. Count only the drops.
+          if (drops.current >= MAX_DROPS) return
           setQuality((q) => (q < 2 ? ((q + 1) as Quality) : q))
           setDpr((d) => Math.min(1.5, d + 0.25))
-        }}
-        onFallback={() => {
-          setQuality(0)
-          setDpr(1)
         }}
       />
       <Lighting />
