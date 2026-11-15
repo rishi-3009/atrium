@@ -29,6 +29,8 @@ export const color = {
     deep: '#d1243b',
     glow: 'rgba(255, 111, 132, 0.45)',
     wash: 'rgba(255, 111, 132, 0.12)',
+    /** Deep red haze for background glows. */
+    ember: 'rgba(209, 36, 59, 0.10)',
   },
   /** Cells in the homepage vessel. */
   cell: {
@@ -49,7 +51,9 @@ export const color = {
 export const font = {
   display: "'Space Grotesk Variable', 'Inter Variable', 'Noto Sans Devanagari Variable', system-ui, sans-serif",
   body: "'Inter Variable', 'Noto Sans Devanagari Variable', system-ui, sans-serif",
-  mono: "'JetBrains Mono', ui-monospace, monospace",
+  mono: "'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace",
+  /** Editorial serif for a few accent words in big headings. */
+  serif: "'Instrument Serif', Georgia, 'Times New Roman', serif",
 } as const
 
 /** Type scale: size / line height / weight / tracking. */

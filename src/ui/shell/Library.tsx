@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Card } from '../components/Card'
-import { Chip } from '../components/Chip'
+import { AmbientGlow, PageHeader } from '../components/Reveal'
 import { useNavStore } from '../nav'
 import { catalog, modelMastery, parseChapter, type LearnerProgress } from '../progress'
 import { ProgressRing } from '../components/ProgressRing'
-import { color, font, spring, type as t } from '../tokens'
+import { color, font, radius, spring, type as t } from '../tokens'
 import { LibrarySide } from './LibrarySide'
 import { ModelThumb } from './ModelThumb'
 import { PhotoScan } from './PhotoScan'
@@ -39,21 +39,46 @@ export function Library({ progress }: { progress: LearnerProgress }) {
   )
 
   return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'auto', padding: `${TOP_BAR_HEIGHT + 24}px clamp(28px, 6vw, 96px) 48px` }}>
-      <h1 style={{ fontFamily: font.display, fontSize: t.h1.size, fontWeight: 700, letterSpacing: t.h1.tracking, margin: 0 }}>Library</h1>
-      <p style={{ color: color.text.secondary, margin: '8px 0 24px', maxWidth: 520 }}>
-        Pick a diagram from your NCERT chapters and open it in 3D.
-      </p>
+    <div style={{ position: 'absolute', inset: 0, overflow: 'auto', padding: `${TOP_BAR_HEIGHT + 32}px clamp(28px, 6vw, 96px) 48px` }}>
+      <AmbientGlow />
+      <div style={{ position: 'relative' }}>
+      <PageHeader
+        eyebrow={`${catalog.length} models · NCERT Class 10 to 12`}
+        words={[{ text: 'Open' }, { text: 'a' }, { text: 'diagram', accent: true }, { text: 'in' }, { text: '3D.' }]}
+        intro="Pick a model from your NCERT chapters, or take a photo of a diagram in your book."
+      />
 
       <PhotoScan />
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 28, flexWrap: 'wrap' }}>
-        {filters.map((f) => (
-          <button key={String(f.id)} onClick={() => setFilter(f.id)} style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer' }}>
-            <Chip active={filter === f.id}>{f.label}</Chip>
-          </button>
-        ))}
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...spring.smooth, delay: 0.75 }}
+        role="tablist"
+        style={{ display: 'inline-flex', gap: 4, padding: 4, marginBottom: 28, borderRadius: radius.pill, border: `1px solid ${color.line.default}`, background: color.bg.raised }}
+      >
+        {filters.map((f) => {
+          const on = filter === f.id
+          return (
+            <button
+              key={String(f.id)}
+              role="tab"
+              aria-selected={on}
+              onClick={() => setFilter(f.id)}
+              style={{ position: 'relative', background: 'none', border: 0, cursor: 'pointer', padding: '0.5rem 1rem', borderRadius: radius.pill, fontFamily: font.display, fontSize: t.small.size, fontWeight: 600, color: on ? color.text.onAccent : color.text.secondary, transition: 'color 0.25s' }}
+            >
+              {on ? (
+                <motion.span
+                  layoutId="library-filter"
+                  transition={spring.snappy}
+                  style={{ position: 'absolute', inset: 0, borderRadius: radius.pill, background: `linear-gradient(135deg, ${color.accent.soft}, ${color.accent.base})` }}
+                />
+              ) : null}
+              <span style={{ position: 'relative' }}>{f.label}</span>
+            </button>
+          )
+        })}
+      </motion.div>
 
       <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start', flexDirection: wide ? 'row' : 'column-reverse' }}>
       <div style={{ display: 'grid', gap: 16, flex: 1, minWidth: 0, width: '100%' }}>
@@ -62,11 +87,14 @@ export function Library({ progress }: { progress: LearnerProgress }) {
           return (
             <motion.div
               key={model.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 28 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ ...spring.smooth, delay: i * 0.06 }}
+              transition={{ ...spring.smooth, delay: 0.5 + i * 0.07 }}
             >
               <Card interactive onClick={() => openModel(model.id)} style={{ display: 'flex', alignItems: 'center', gap: 24, padding: 16 }}>
+                <span style={{ flex: 'none', width: 44, alignSelf: 'flex-start', paddingTop: 6, paddingLeft: 6, fontFamily: font.serif, fontStyle: 'italic', fontSize: '2.2rem', lineHeight: 1, color: color.accent.soft, opacity: 0.85 }}>
+                  {String(catalog.indexOf(model) + 1).padStart(2, '0')}
+                </span>
                 <ModelThumb id={model.id} />
                 <div style={{ flex: 1, minWidth: 0, display: 'grid', gap: 12 }}>
                   <div>
@@ -95,6 +123,7 @@ export function Library({ progress }: { progress: LearnerProgress }) {
         })}
       </div>
       <LibrarySide progress={progress} sticky={wide} />
+      </div>
       </div>
     </div>
   )
