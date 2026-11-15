@@ -2,7 +2,7 @@
 
 Take an NCERT biology diagram apart in 3D with your bare hands. An AI tutor explains each part, sets a small task, and asks a NEET-style question.
 
-**Watch the demo (3 min 38 s):** [YOUTUBE HERE](https://youtu.be/AOYcQKDiNA8)
+**Watch the demo (3 min 38 s):** [YOUTUBE](https://youtu.be/AOYcQKDiNA8)
 
 **Try it live:** https://atrium-rouge-theta.vercel.app
 
