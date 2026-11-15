@@ -2,7 +2,7 @@
 
 Take an NCERT biology diagram apart in 3D with your bare hands. An AI tutor explains each part, sets a small task, and asks a NEET-style question.
 
-**Try it live:** DEMO_URL_HERE
+**Try it live:** https://atrium-rouge-theta.vercel.app
 
 Made for INNOVEX 2026, problem statement PS03 (Intelligent Education).
 
